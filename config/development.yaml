@@ -1,0 +1,119 @@
+configType: "ocp"
+#Labels extras que se deseen usar para todos los objetos de ocp
+# labels:
+#   labelextra: "holamundo"
+# Configuracion del deploymentConfig
+deploymentConfig:
+  # strategy: define la estrategia de deployment de nuestra app
+  # los valores permitidos son Rolling o Recreate, si no se define se toma por default la estrategia Rolling
+  strategy: "Rolling"
+  # image: Informacion referida a el container
+  image:
+    # imagePullPolicy: Campo que define el comportamiento de descarga de una imagen
+    # Si no esta especificado, el valor por default is Always
+    # los valores pueden ser (IfNotPresent, Always, Never). Para mas informacion, recomendamos visitar: https://docs.openshift.com/container-platform/4.6/openshift_images/managing_images/image-pull-policy.html
+    imagePullPolicy: Always
+    #liveness_probe: Este campo define la direccion sobre la cual se hace el chequeo de salud, es decir liveness.[Campo Obligatorio]
+    liveness_probe: "/health"
+    #readiness_probe: Este campo define la direccion sobre la cual se hace el chequeo de disponibilidad, es decir readiness.[Campo Obligatorio]
+    readiness_probe: "/health"
+    initialDelaySeconds: 40    
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1    
+    failureThreshold: 3
+    # http_port: Puerto en el que estara expuesta la aplicacion con protocolo http
+    http_port: 8080
+    # http_port: Puerto en el que estara expuesta la aplicacion con protocolo https
+    https_port: 8443
+#Configuracion para definir Resources (esto se define a la misma altura que image, NO dentro, si va comentado se configurarán los valores por defecto)
+  #cpuLimits: 100m
+  #memoryLimits: 500Mi
+  #cpuRequests: 10m
+  #memoryRequests: 100Mi
+
+  
+# Tambien se pueden generar etiquetas para la aplicacion, indicando clave valor para cada etiqueta.
+# labels:
+#   miapp: hola mi app
+
+# Variables: se pueden indicar variables, la cual pueden ser de dos tipos, configmap o secrets
+variables:
+  # Se pueden cargar variables desde archivos, si no se necesita comentar
+  # Define the environment variable for configmaps y secrets
+  # name:  el nombre del archivo configmap
+  # keyName: el nombre de la variable en el configmap
+  # value: el valor de la variable   
+  configmaps:
+    - name: "cm-files"
+      values:
+        - keyName: keyNameA
+          value: "Bienvenidos a value A"
+        - keyName: file.json
+          multiline: true
+          value: | 
+            { 
+              "Serilog": 
+              {
+                "MinimumLevel": "Information" 
+              }
+            }
+    - name: "nameconfigmapb"
+      values:
+        - keyName: keyNameB
+          value: "Bienvenidos a valueB"
+  
+  # secrets: Campo compuesta por c2lave:valor que nosotros deseemos generar.
+  # Debe ser OBLIGATORIAMENTE en base64 para typeData data, otro typeData seria stringData
+  # Adicionalmente, si el environment que estas llenando es produccion recomendamos dejarlo con dos comillas vacias.
+  # ya que esto sigue el circuito del pipeline 1.0
+  #secrets:
+  #  - name: "namesecreta"
+  #    typeData: "stringData"
+  #    values:
+  #    - keyName: keyNameA1
+  #      value: "valor1"
+  #    - keyName: keyNameA2
+  #      value: "valor2"
+  #  - name: "namesecretb"
+  #    typeData: "stringData"
+  #    values:
+  #    - keyName: keyNameSecretB
+  #      value: "valor3"
+
+  # Monta un volumen con una key que este en un configmap definido en la seccion respectiva
+  
+  #volumes:
+  #  fromConfigmaps: 
+  #  - name: 'volume-json-file'
+  #    dirPath: '/config'
+  #    fileName: 'file.json'
+  #    defaultMode: 420
+      # readOnly: true
+  #    configName: 'cm-files'
+
+#Configuracion del servicio:
+service:
+  # El tipo de servicio [Campo Obligatorio] , el cual puede ser ClusterIP , NodePort o LoadBalancer
+  type: ClusterIP
+  # port: puerto de exposicion del servicio
+  port: 8080
+  # target_port: puerto target de nuestra aplicacion.
+  target_port: 8080
+
+# Route configuration
+# oldUrlCreation: El campo oldUrlCreation en false se utiliza para los proyectos nuevos en 2.0 - en true para los proyectos que se migran desde 1.0.
+route:
+  oldUrlCreation: false
+  # annotations:
+  #   haproxy.router.openshift.io/timeout: 60000ms
+  #   haproxy.router.openshift.io/tune-bufsize: 3000000
+  #kind: tipo de route a la que apunta, en este caso debe ser Service dado que
+  #declaramos anteriormente un service.
+  kind: Service
+  #weight: Cada servicio tiene un weightasociado. Esto representa la porción de solicitudes manejadas por el servicio
+  weight: 100
+  # insecureEdgeTerminationPolicy: Allow  # If not specified, default is Allow
+  # termination: edge # If not specified, default is edge
+
+# Podes encontrar más info en la siguiente documentación para la configuración de estos files: https://confluence.ar.bsch/pages/viewpage.action?pageId=56081949
