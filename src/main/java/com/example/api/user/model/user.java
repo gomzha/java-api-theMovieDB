@@ -7,9 +7,8 @@ import java.util.UUID;
 @Entity
 public class user {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private int id;
     private String name;
     private String token;
     private String privilege;
@@ -17,18 +16,18 @@ public class user {
     public user() {
     }
 
-    public user(UUID id, String name, String privilege, String token) {
+    public user(int id, String name, String privilege, String token) {
         this.id = id;
         this.name = name;
         this.privilege = privilege;
         this.token = token;
     }
 
-    public UUID getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(int id) {
         this.id = id;
     }
 
